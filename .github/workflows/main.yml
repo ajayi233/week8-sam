@@ -47,14 +47,14 @@ jobs:
       - name: Create Deployment S3 Bucket if not exists
         run: |
           aws s3api head-bucket --bucket "cf-templates-week8-eu-west-1" || \
-          aws s3 mb s3://cf-templates-week8-sns-eu-west-1 --region eu-west-1
+          aws s3 mb s3://cf-templates-week8-lambda-sns-eu-west-1 --region eu-west-1
       
       - name: Deploy SAM application
         run: |
           sam deploy \
             --template-file .aws-sam/build/template.yaml \
             --stack-name s3-sns-notifier-${{ matrix.environment }} \
-            --s3-bucket cf-templates-week8-eu-west-1 \
+            --s3-bucket cf-templates-week8-lambda-sns-eu-west-1 \
             --s3-prefix sam-artifacts \
             --region eu-west-1 \
             --parameter-overrides \
