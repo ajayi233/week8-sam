@@ -1,0 +1,6 @@
+version = 0.1
+[default.deploy.parameters]
+stack_name = "s3-sns-notifier-${Env}"
+region = "eu-west-1"
+capabilities = "CAPABILITY_IAM"
+confirm_changeset = false

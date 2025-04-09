@@ -1,0 +1,130 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Transform": "AWS::Serverless-2016-10-31",
+  "Description": "Event Driven Architecture with S3, Lambda, and SNS",
+  "Parameters": {
+      "EnvironmentName": {
+          "Type": "String",
+          "Default": "dev",
+          "Description": "Environment name for the stack."
+      },
+      "NotificationEmail": {
+          "Type": "String",
+          "Description": "Email address to receive notifications."
+      }
+  },
+  "Globals": {
+      "Function": {
+          "Timeout": 10,
+          "Runtime": "nodejs18.x"
+      }
+  },
+  "Resources": {
+      "UploadBucket": {
+          "Type": "AWS::S3::Bucket",
+          "Properties": {
+              "BucketName": {
+                  "Fn::Sub": "upload-bucket-${EnvironmentName}-${AWS::AccountId}"
+              },
+              "NotificationConfiguration": {
+                  "LambdaConfigurations": [
+                      {
+                          "Event": "s3:ObjectCreated:*",
+                          "Function": {
+                              "Fn::GetAtt": [
+                                  "NotificationFunction",
+                                  "Arn"
+                              ]
+                          }
+                      }
+                  ]
+              }
+          }
+      },
+      "NotificationTopic": {
+          "Type": "AWS::SNS::Topic",
+          "Properties": {
+              "TopicName": {
+                  "Fn::Sub": "file-upload-notification-${EnvironmentName}"
+              }
+          }
+      },
+      "NotificationSubscription": {
+          "Type": "AWS::SNS::Subscription",
+          "Properties": {
+              "Protocol": "email",
+              "Endpoint": {
+                  "Ref": "NotificationEmail"
+              },
+              "TopicArn": {
+                  "Ref": "NotificationTopic"
+              }
+          }
+      },
+      "NotificationFunction": {
+          "Type": "AWS::Serverless::Function",
+          "Properties": {
+              "FunctionName": {
+                  "Fn::Sub": "s3-upload-notifier-${EnvironmentName}"
+              },
+              "CodeUri": "src/",
+              "Handler": "app.handler",
+              "Environment": {
+                  "Variables": {
+                      "SNS_TOPIC_ARN": {
+                          "Ref": "NotificationTopic"
+                      }
+                  }
+              },
+              "Policies": [
+                  {
+                      "SNSPublishMessagePolicy": {
+                          "TopicName": {
+                              "Fn::GetAtt": [
+                                  "NotificationTopic",
+                                  "TopicName"
+                              ]
+                          }
+                      }
+                  }
+              ],
+              "Events": {
+                  "S3Event": {
+                      "Type": "S3",
+                      "Properties": {
+                          "Bucket": {
+                              "Ref": "UploadBucket"
+                          },
+                          "Events": [
+                              "s3:ObjectCreated:*"
+                          ]
+                      }
+                  }
+              }
+          }
+      }
+  },
+  "Outputs": {
+      "UploadBucketName": {
+          "Description": "S3 bucket name for file uploads",
+          "Value": {
+              "Ref": "UploadBucket"
+          }
+      },
+      "NotificationTopicArn": {
+          "Description": "SNS topic ARN for notifications",
+          "Value": {
+              "Ref": "NotificationTopic"
+          }
+      },
+      "NotificationFunctionArn": {
+          "Description": "Lambda function ARN for notifications",
+          "Value": {
+              "Fn::GetAtt": [
+                  "NotificationFunction",
+                  "Arn"
+              ]
+          }
+      }
+  }
+}
