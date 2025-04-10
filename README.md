@@ -53,4 +53,3 @@ The S3 Upload Notifier is an event-driven application that integrates AWS S3, La
 
 Once deployed, any file uploaded to the configured S3 bucket will trigger a Lambda function that sends an SNS notification to the specified email address.
 
-# week8-sam
