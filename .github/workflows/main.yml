@@ -40,7 +40,7 @@ jobs:
 
       - name: Build SAM Application
         run: |
-          sam build --template-file template.yaml
+          sam build --template-file template.json
 
       - name: Ensure S3 Deployment Bucket Exists
         run: |
