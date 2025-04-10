@@ -40,16 +40,6 @@ jobs:
           aws s3 mb s3://cf-templates-sam-eu-west-1 --region eu-west-1
       - name: Deploy SAM application
         run: |
-          # Check if the stack exists and handle UPDATE_ROLLBACK_FAILED state
-          if aws cloudformation describe-stacks --stack-name s3-sns-notifier-${{ matrix.environment }} --region eu-west-1 >/dev/null 2>&1; then
-            STATUS=$(aws cloudformation describe-stacks --stack-name s3-sns-notifier-${{ matrix.environment }} --region eu-west-1 --query "Stacks[0].StackStatus" --output text)
-            if [ "$STATUS" = "UPDATE_ROLLBACK_FAILED" ]; then
-              echo "Stack is in UPDATE_ROLLBACK_FAILED state. Continuing rollback."
-              aws cloudformation continue-update-rollback --stack-name s3-sns-notifier-${{ matrix.environment }} --region eu-west-1
-              aws cloudformation wait stack-rollback-complete --stack-name s3-sns-notifier-${{ matrix.environment }} --region eu-west-1
-            fi
-          fi
-
           sam deploy \
             --template-file .aws-sam/build/template.yaml \
             --stack-name s3-sns-notifier-${{ matrix.environment }} \
